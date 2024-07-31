@@ -1,0 +1,78 @@
+package ArquivoTexto;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Scanner;
+
+public class CsvProcessor {
+	public static void main(String[] args) {
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter the path of the CSV file: ");
+		String sourcePathStr = sc.nextLine();
+
+		Path sourcePath = Paths.get(sourcePathStr);
+		Path sourceDir = sourcePath.getParent();
+
+		// Create output directory
+		Path outputDir = sourceDir.resolve("out");
+		if (Files.notExists(outputDir)) {
+			try {
+				Files.createDirectory(outputDir);
+			} catch (IOException e) {
+				System.out.println("Error creating output directory: " + e.getMessage());
+				return null;
+			}
+		}
+
+		Path outputPath = outputDir.resolve("summary.csv");
+
+		try (BufferedReader br = new BufferedReader(new FileReader(sourcePath.toFile()));
+				BufferedWriter bw = new BufferedWriter(new FileWriter(outputPath.toFile()))) {
+
+			String line = br.readLine(); // Read the header
+			if (line == null) {
+				System.out.println("The CSV file is empty.");
+				return;
+			}
+
+			// Process each line in the CSV file
+			while ((line = br.readLine()) != null) {
+				String[] fields = line.split(",");
+				if (fields.length < 3) {
+					System.out.println("Invalid line format: " + line);
+					continue;
+				}
+
+				String name = fields[0];
+				double price;
+				int quantity;
+
+				try {
+					price = Double.parseDouble(fields[1]);
+					quantity = Integer.parseInt(fields[2]);
+				} catch (NumberFormatException e) {
+					System.out.println("Invalid number format in line: " + line);
+					continue;
+				}
+
+				double total = price * quantity;
+
+				bw.write(name + "," + total);
+				bw.newLine();
+			}
+
+			System.out.println("Summary file created successfully at: " + outputPath);
+
+		} catch (IOException e) {
+			System.out.println("Error: " + e.getMessage());
+		}
+
+		sc.close();
+	}
+}
